@@ -1,0 +1,41 @@
+# Complex TFIDF
+
+
+## A review of TFIDF
+
+(Skip ahead if you're familiar with TF-IDF)
+
+TFIDF is an embedding algorithm that converts a list of documents into vectors whose components correspond to the terms comprising each document and the values of the components reflect the frequency of that terms in the document as well as how common it is over all documents. By a "term"", we could mean words or other units of text like bigrams or ngrams, so splitting "hello world" by words would return tokens "hello" and "world", whereas splitting by bigrams would return "he","el","ll",...,"ld". 
+
+Let's recall the definition of TFIDF explicitly. Consider a list of $N$ documents $d_1,...,d_N$, where each document $d_i$ is comprised of a subset of terms from a set of distinct terms $T$ (the dictionary), each term $t\in T$ appearing $tf_i(t)$ in the document $d_i$ (the *term frequency*) and appearing in $N(t)$ documents. If we enumerate the dictionary $T$ as $t_{1},...,t_{D}$, then the Term Frequency-Inverse Document Frequency (TF-IDF) representation of the document $d_i$ is the vector in $\mathbb{R}^{D}$ whose $i$th component is
+
+$$ tf_{i}(t)\log\frac{N}{N(t)}.$$
+
+(Note that one can also normalize $tf_i(t)$ to be the proportion of times $t$ appears in document $i$ rather than the number, but we will work with this definition.)
+
+This represents a document in such a way that the dominant components correspond to terms that appear frequently in the document that are rare overall while suppressing the values of very common terms. Imagining the documents in question are pages of wikipedia, components corresponding to terms like "the" and "is" will have small values since these terms are in most every page, so the inverse document frequency $N/N(t)$ will be close to $1$ and hence the logarithm will be close to zero, whereas terms like "Mingus" and "heteroskadicity" are quite rare overall, making the logarithm much larger. 
+
+Of course, there are more sophisticated text embeddings that encode context and meaning of a document (noteably BERT and its siblings), so that "The War of the Worlds" and "The Battle of the Planets" will have close representations (at least more so in comparison to unrelated sentences) than they would with a TF-IDF representation. In particular, the order of terms matter, so the representations of "the dog caught the ball" and "the ball caught the dog" would be different, whereas the TF-IDF representations would be identical. However, TF-IDF is a lightweight, transparent representation that is still very useful.
+
+TF-IDF is also good at representing short strings when using bigrams (or ngrams) as the terms rather than words: now the components of the embeddings correspond to bigrams (so for "amazon", the nonzero components will correspond to "am","ma","az",...). One reason is that it can be forgiving of alternate spellings of words (e.g. "amazoncom", "amazon.com", "amazon com" will have similar representations). 
+
+## Adding order to TF-IDF wtih complex numbers.
+
+One question I thought about was whether one could come up with a TF-IDF-like representation that somehow encodes the position of the terms, but without having to use something as complex as Attention or Transformers. A cheap way of doing this is using complex numbers. 
+
+Let's assume all our documents have length at most $M$, that is, each document $d_i$ is an ordered list of terms $t_{i,1},...,t_{i,m_i}$ (where $t_{i,j}\in T$ and $m_i\leq M$ and the terms may repeat. If $e_{i,j}$ is the standard basis vector corresponding to the term $t_{i,j}$, we define a complex TF-IDf representation of $d_i$ as 
+
+$$CTFIDF(d_i) = \sum_{j=1}^{m_i} e^{\frac{\pi ij}{4M}} \log\frac{N}{N(t_{i,j})}$$
+
+Some remarks
+
+1. Without the complex exponential this would just return the usual TFIDF. 
+2. Note that this is effectively a vector in $\mathbb{R}^{D}\times i\mathbb{R}^{D}\equiv \mathbb{R}^{2D}$, so we have only doubled the dimension of the representation.
+3. It is not hard to show $|TFIDF(d_i)| = |CTFIDF(d_i)|$, however now it is possible to
+ have strings with identical TFIDF representation but distinct CTFIDF. 
+
+# Demonstration
+
+Below we use a custom tfidf object that can do both traditional and complex tfidf. As a demonstration, we fit it on the words in the above text.
+
+
